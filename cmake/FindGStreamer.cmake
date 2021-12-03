@@ -1,0 +1,131 @@
+# FindGStreamer
+# ===============
+#
+# Find a GStreamer installation.
+# In addition, components can be added to the find_package call to require additional plugins like "base" and "video"
+#
+# Output variable
+# ---------------
+# 
+#   GSTREAMER_FOUND           True if headers and requested libraries were found
+#   GSTREAMER_LIBRARIES       Component libraries to be linked.
+#   GSTREAMER_LIBRARY_DIRS    Directories of component libraries to be linked.
+#   GSTREAMER_INCLUDE_DIRS    Include directories.
+#
+#   GSTREAMER_COMBINED_LIBRARIES       Combined libraries of base gstreamer and selected components
+#   GSTREAMER_COMBINED_LIBRARY_DIRS    Combined library dirs of base gstreamer and selected components
+#   GSTREAMER_COMBINED_INCLUDE_DIRS    Combined include dirs of base gstreamer and selected components
+#
+#   GSTREAMER_<component_name>_LIBRARIES       Component libraries to be linked.
+#   GSTREAMER_<component_name>_LIBRARY_DIRS    Directories of component libraries to be linked.
+#   GSTREAMER_<component_name>_INCLUDE_DIRS    Include directories.
+#
+
+set(OUTPUT_VARS)
+
+if(WIN32 AND MSVC)
+    set(GSTREAMER_ROOT_DIR "C:/gstreamer/1.0/msvc_x86_64")
+
+    set(GSTREAMER_INCLUDE_DIRS "${GSTREAMER_ROOT_DIR}/include/gstreamer-1.0")
+    set(GSTREAMER_LIBRARY_DIRS "${GSTREAMER_ROOT_DIR}/lib")
+    find_library(GSTREAMER_LIBRARY NAME gstreamer-1.0 HINTS ${GSTREAMER_LIBRARY_DIRS})
+    find_library(GOBJECT_LIBRARY NAME gobject-2.0 HINTS ${GSTREAMER_LIBRARY_DIRS})
+    find_library(GLIB_LIBRARY NAME glib-2.0 HINTS ${GSTREAMER_LIBRARY_DIRS})
+    find_library(INTL_LIBRARY NAME intl HINTS ${GSTREAMER_LIBRARY_DIRS})
+    list(APPEND GSTREAMER_LIBRARIES ${GSTREAMER_LIBRARY} ${GOBJECT_LIBRARY} ${GLIB_LIBRARY} ${INTL_LIBRARY})
+
+    list(APPEND OUTPUT_VARS GSTREAMER_INCLUDE_DIRS GSTREAMER_LIBRARIES)
+    list(APPEND GSTREAMER_COMBINED_LIBRARIES ${GSTREAMER_LIBRARIES})
+    list(APPEND GSTREAMER_COMBINED_LIBRARY_DIRS ${GSTREAMER_LIBRARY_DIRS})
+    list(APPEND GSTREAMER_COMBINED_INCLUDE_DIRS ${GSTREAMER_INCLUDE_DIRS})
+
+    if("base" IN_LIST GStreamer_FIND_COMPONENTS)
+        set(GSTREAMER_BASE_INCLUDE_DIRS "${GSTREAMER_ROOT_DIR}/include/gstreamer-1.0")
+        set(GSTREAMER_BASE_LIBRARY_DIRS "${GSTREAMER_ROOT_DIR}/lib")
+        find_library(GSTREAMER_BASE_LIBRARIES NAME gstbase-1.0 HINTS ${GSTREAMER_BASE_LIBRARY_DIRS})
+
+        list(APPEND OUTPUT_VARS GSTREAMER_BASE_INCLUDE_DIRS GSTREAMER_BASE_LIBRARIES)
+        list(APPEND GSTREAMER_COMBINED_LIBRARIES ${GSTREAMER_BASE_LIBRARIES})
+        list(APPEND GSTREAMER_COMBINED_LIBRARY_DIRS ${GSTREAMER_BASE_LIBRARY_DIRS})
+        list(APPEND GSTREAMER_COMBINED_INCLUDE_DIRS ${GSTREAMER_BASE_INCLUDE_DIRS})
+    endif()
+
+    if("video" IN_LIST GStreamer_FIND_COMPONENTS)
+        set(GSTREAMER_VIDEO_INCLUDE_DIRS "${GSTREAMER_ROOT_DIR}/include/gstreamer-1.0")
+        set(GSTREAMER_VIDEO_LIBRARY_DIRS "${GSTREAMER_ROOT_DIR}/lib")
+        find_library(GSTREAMER_VIDEO_LIBRARIES NAME gstvideo-1.0 HINTS ${GSTREAMER_VIDEO_LIBRARY_DIRS})
+
+        list(APPEND OUTPUT_VARS GSTREAMER_VIDEO_INCLUDE_DIRS GSTREAMER_VIDEO_LIBRARIES)
+        list(APPEND GSTREAMER_COMBINED_LIBRARIES ${GSTREAMER_VIDEO_LIBRARIES})
+        list(APPEND GSTREAMER_COMBINED_LIBRARY_DIRS ${GSTREAMER_VIDEO_LIBRARY_DIRS})
+        list(APPEND GSTREAMER_COMBINED_INCLUDE_DIRS ${GSTREAMER_VIDEO_INCLUDE_DIRS})
+    endif()
+
+    # Check gst elements
+    foreach(ELEMENT ${GStreamer_FIND_COMPONENTS})
+        if(NOT (ELEMENT STREQUAL "base" OR ELEMENT STREQUAL "video"))
+            string(TOUPPER ${ELEMENT} ELEMENT_UPPER)
+            
+            set(GSTREAMER_${ELEMENT_UPPER}_LIBRARY_DIRS "${GSTREAMER_ROOT_DIR}/lib/gstreamer-1.0")
+            find_file(GSTREAMER_${ELEMENT_UPPER}_LIBRARIES NAME "gst${ELEMENT}.dll" HINTS ${GSTREAMER_${ELEMENT_UPPER}_LIBRARY_DIRS})
+            
+            list(APPEND OUTPUT_VARS GSTREAMER_${ELEMENT_UPPER}_LIBRARIES)
+            list(APPEND GSTREAMER_COMBINED_LIBRARIES ${GSTREAMER_${ELEMENT_UPPER}_LIBRARIES})
+            list(APPEND GSTREAMER_COMBINED_LIBRARY_DIRS ${GSTREAMER_${ELEMENT_UPPER}_LIBRARY_DIRS})
+        endif()
+    endforeach()
+else()
+    find_package(PkgConfig)
+    pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+    list(APPEND OUTPUT_VARS GSTREAMER_INCLUDE_DIRS GSTREAMER_LIBRARIES)
+    list(APPEND GSTREAMER_COMBINED_LIBRARIES ${GSTREAMER_LIBRARIES})
+    list(APPEND GSTREAMER_COMBINED_LIBRARY_DIRS ${GSTREAMER_LIBRARY_DIRS})
+    list(APPEND GSTREAMER_COMBINED_INCLUDE_DIRS ${GSTREAMER_INCLUDE_DIRS})
+
+    # Gst elements dir
+    if(APPLE)
+        set(GSTREAMER_ELEMENTS_DIR "/usr/local/lib/gstreamer-1.0")
+    else()
+        set(GSTREAMER_ELEMENTS_DIR "/usr/lib/x86_64-linux-gnu/gstreamer-1.0")
+    endif()
+    list(APPEND OUTPUT_VARS GSTREAMER_ELEMENTS_DIR)
+
+    if("base" IN_LIST GStreamer_FIND_COMPONENTS)
+        pkg_check_modules(GSTREAMER_BASE REQUIRED gstreamer-plugins-base-1.0)
+
+        list(APPEND OUTPUT_VARS GSTREAMER_BASE_INCLUDE_DIRS GSTREAMER_BASE_LIBRARIES)
+        list(APPEND GSTREAMER_COMBINED_LIBRARIES ${GSTREAMER_BASE_LIBRARIES})
+        list(APPEND GSTREAMER_COMBINED_LIBRARY_DIRS ${GSTREAMER_BASE_LIBRARY_DIRS})
+        list(APPEND GSTREAMER_COMBINED_INCLUDE_DIRS ${GSTREAMER_BASE_INCLUDE_DIRS})
+    endif()
+
+    if("video" IN_LIST GStreamer_FIND_COMPONENTS)
+        pkg_check_modules(GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0)
+
+        list(APPEND OUTPUT_VARS GSTREAMER_VIDEO_INCLUDE_DIRS GSTREAMER_VIDEO_LIBRARIES)
+        list(APPEND GSTREAMER_COMBINED_LIBRARIES ${GSTREAMER_VIDEO_LIBRARIES})
+        list(APPEND GSTREAMER_COMBINED_LIBRARY_DIRS ${GSTREAMER_VIDEO_LIBRARY_DIRS})
+        list(APPEND GSTREAMER_COMBINED_INCLUDE_DIRS ${GSTREAMER_VIDEO_INCLUDE_DIRS})
+    endif()
+
+    # Check gst elements
+    foreach(ELEMENT ${GStreamer_FIND_COMPONENTS})
+        if(NOT (ELEMENT STREQUAL "base" OR ELEMENT STREQUAL "video"))
+            string(TOUPPER ${ELEMENT} ELEMENT_UPPER)
+            
+            find_library(GSTREAMER_${ELEMENT_UPPER}_LIBRARIES NAME "gst${ELEMENT}" HINTS ${GSTREAMER_ELEMENTS_DIR})
+            get_filename_component(GSTREAMER_${ELEMENT_UPPER}_LIBRARY_DIRS ${GSTREAMER_${ELEMENT_UPPER}_LIBRARIES} DIRECTORY)
+
+            list(APPEND OUTPUT_VARS GSTREAMER_${ELEMENT_UPPER}_LIBRARIES)
+            list(APPEND GSTREAMER_COMBINED_LIBRARIES ${GSTREAMER_${ELEMENT_UPPER}_LIBRARIES})
+            list(APPEND GSTREAMER_COMBINED_LIBRARY_DIRS ${GSTREAMER_${ELEMENT_UPPER}_LIBRARY_DIRS})
+        endif()
+    endforeach()
+endif()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(GStreamer DEFAULT_MSG ${OUTPUT_VARS})
+
+mark_as_advanced(${OUTPUT_VARS})
+
+unset(OUTPUT_VARS)

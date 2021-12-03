@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.38.2 -->
+<interface>
+  <requires lib="gtk+" version="3.24"/>
+  <object class="GtkFileFilter" id="filefilter">
+    <mime-types>
+      <mime-type>application/octet-stream</mime-type>
+    </mime-types>
+    <patterns>
+      <pattern>*.onnx</pattern>
+    </patterns>
+  </object>
+  <template class="SpsPluginBaseGuiObjdetection" parent="GtkBox">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="margin-start">8</property>
+    <property name="margin-end">8</property>
+    <property name="margin-top">8</property>
+    <property name="margin-bottom">8</property>
+    <property name="orientation">vertical</property>
+    <property name="spacing">8</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <child>
+          <object class="GtkLabel" id="lblHeading">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="hexpand">True</property>
+            <property name="label" translatable="yes">&lt;span size="x-large"&gt;Object Detection&lt;/span&gt;</property>
+            <property name="use-markup">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btnStoreDefaults">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">False</property>
+            <property name="halign">end</property>
+            <signal name="clicked" handler="btn_store_defaults_handler" swapped="no"/>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="stock">gtk-floppy</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="lblDescription">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="label" translatable="yes">This detector allows you to specify an object detection model, which will be applied to the video to identify regions. It produces labels of type "&lt;prefix&gt;:&lt;class&gt;"</property>
+        <property name="wrap">True</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
+    <child>
+      <!-- n-columns=2 n-rows=3 -->
+      <object class="GtkGrid">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="row-spacing">4</property>
+        <property name="column-spacing">8</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">start</property>
+            <property name="label" translatable="yes">Active:</property>
+          </object>
+          <packing>
+            <property name="left-attach">0</property>
+            <property name="top-attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">start</property>
+            <property name="label" translatable="yes">Prefix:</property>
+          </object>
+          <packing>
+            <property name="left-attach">0</property>
+            <property name="top-attach">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkCheckButton" id="cbActive">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">False</property>
+            <property name="halign">end</property>
+            <property name="draw-indicator">True</property>
+            <signal name="toggled" handler="cb_active_toggled" />
+          </object>
+          <packing>
+            <property name="left-attach">1</property>
+            <property name="top-attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="txtPrefix">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <signal name="changed" handler="txt_prefix_changed" />
+          </object>
+          <packing>
+            <property name="left-attach">1</property>
+            <property name="top-attach">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">start</property>
+            <property name="hexpand">True</property>
+            <property name="label" translatable="yes">Model Path:</property>
+          </object>
+          <packing>
+            <property name="left-attach">0</property>
+            <property name="top-attach">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFileChooserButton" id="fcModel">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="filter">filefilter</property>
+            <property name="title" translatable="yes"/>
+            <signal name="file-set" handler="fc_model_changed" />
+          </object>
+          <packing>
+            <property name="left-attach">1</property>
+            <property name="top-attach">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">start</property>
+            <property name="valign">start</property>
+            <property name="label" translatable="yes">Available Labels:</property>
+          </object>
+          <packing>
+            <property name="left-attach">0</property>
+            <property name="top-attach">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lblAvailableLabels">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">start</property>
+            <property name="hexpand">True</property>
+          </object>
+          <packing>
+            <property name="left-attach">1</property>
+            <property name="top-attach">3</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+        <property name="position">2</property>
+      </packing>
+    </child>
+  </template>
+</interface>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.38.2 -->
+<interface>
+  <requires lib="gtk+" version="3.24"/>
+  <menu id='appMenu'>
+    <item>
+      <attribute name="label">Preferences</attribute>
+      <attribute name="action">app.preferences</attribute>
+    </item>
+    <item>
+      <attribute name="label">Quit Smart Privacy Shield</attribute>
+      <attribute name="action">app.quit</attribute>
+    </item>
+  </menu>
+  <menu id='mainMenu'>
+    <submenu>
+      <attribute name="label">Playback</attribute>
+      <item>
+        <attribute name="label">Start/Pause</attribute>
+        <attribute name="action">app.start</attribute>
+      </item>
+      <item>
+        <attribute name="label">Stop</attribute>
+        <attribute name="action">app.stop</attribute>
+      </item>
+    </submenu>
+    <submenu>
+      <attribute name="label">Files</attribute>
+      <item>
+        <attribute name="label">Open File Processor</attribute>
+        <attribute name="action">app.file_processor</attribute>
+      </item>
+    </submenu>
+  </menu>
+</interface>

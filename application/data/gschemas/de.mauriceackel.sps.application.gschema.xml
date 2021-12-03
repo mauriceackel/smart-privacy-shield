@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema path="/de/mauriceackel/sps/application/" id="de.mauriceackel.sps.application">
+        <key name="pos-x" type="i">
+            <default>0</default>
+            <summary>Horizontal position</summary>
+            <description>The horizontal position of the main appliaction window</description>
+        </key>
+        <key name="pos-y" type="i">
+            <default>0</default>
+            <summary>Vertical position</summary>
+            <description>The vertical position of the main appliaction window</description>
+        </key>
+        <key name="window-width" type="i">
+            <default>0</default>
+            <summary>Window width</summary>
+            <description>The width of the main appliaction window</description>
+        </key>
+        <key name="window-height" type="i">
+            <default>0</default>
+            <summary>Window height</summary>
+            <description>The height of the main appliaction window</description>
+        </key>
+
+        <!-- Array of sourceInfo together with an array of preprocessors, detectors, postprocessors and their respective settings -->
+        <key name="sources" type="a((ssxx)a{sa{sv}})">
+            <default>[]</default>
+            <summary>Stored Sources</summary>
+            <description>Stores sourceInfo and all elements with their config of last active sources</description>
+        </key>
+
+        <key name="file-processing" type="a{sa{sv}}">
+            <default>[]</default>
+            <summary>File processing pipeline config</summary>
+            <description>Stores information about setup of file processing pipeline</description>
+        </key>
+
+        <key name="default-preprocessors" type="as">
+            <default>[]</default>
+            <summary>Default Preprocessors</summary>
+            <description>Names of default preprocessors</description>
+        </key>
+
+        <key name="default-detectors" type="as">
+            <default>[]</default>
+            <summary>Default Detectors</summary>
+            <description>Names of default detectors</description>
+        </key>
+
+        <key name="default-postprocessors" type="as">
+            <default>[]</default>
+            <summary>Default Postprocessors</summary>
+            <description>Names of default postprocessors</description>
+        </key>
+    </schema>
+</schemalist>

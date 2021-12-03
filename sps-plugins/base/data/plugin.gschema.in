@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema path="/de/mauriceackel/sps/plugins/pluginbase/" id="${IDENTIFIER}">
+        <key name="changedetector" type="(bi)">
+            <default>(true,10)</default>
+            <summary>Changedetector Defaults</summary>
+            <description>The default settings of the change detector</description>
+        </key>
+        <key name="regions" type="(bsas)">
+            <default>(true,"regions",[])</default>
+            <summary>Regions Defaults</summary>
+            <description>The default settings of the regions detector</description>
+        </key>
+        <key name="objdetection" type="(bss)">
+            <default>(true,"objdetection","")</default>
+            <summary>Objdetection Defaults</summary>
+            <description>The default settings of the object detector</description>
+        </key>
+        <key name="winanalyzer" type="(bs(ssxx))">
+            <default>(true,"winanalyzer",("","",0,0))</default>
+            <summary>Winanalyzer Defaults</summary>
+            <description>The default settings of the window analyzer</description>
+        </key>
+        <key name="obstruct" type="(bbidas)">
+            <default>(true,false,2,0.0,[])</default>
+            <summary>Obstruct Defaults</summary>
+            <description>The default settings of the obstruct postprocessor</description>
+        </key>
+    </schema>
+</schemalist>

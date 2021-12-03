@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.38.2 -->
+<interface>
+  <requires lib="gtk+" version="3.24"/>
+  <template class="SpsFileProcessorWindow" parent="GtkWindow">
+    <property name="can-focus">False</property>
+    <property name="title" translatable="yes">Smart Privacy Shield File Processor</property>
+    <property name="window-position">center</property>
+    <property name="default-width">300</property>
+    <property name="default-height">100</property>
+    <signal name="delete-event" handler="window_close_handler" />
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="margin-start">4</property>
+        <property name="margin-end">4</property>
+        <property name="margin-top">4</property>
+        <property name="margin-bottom">4</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">4</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">start</property>
+            <property name="valign">end</property>
+            <property name="label" translatable="yes">Input File:</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="spacing">4</property>
+            <child>
+              <object class="GtkFileChooserButton" id="fcInput">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="hexpand">True</property>
+                <property name="title" translatable="yes"/>
+                <signal name="file-set" handler="fc_input_changed" />
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="btnConfigure">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="halign">end</property>
+                <signal name="clicked" handler="btn_configure_handler" />
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="stock">gtk-edit</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="valign">end</property>
+            <property name="vexpand">True</property>
+            <child>
+              <object class="GtkLabel" id="lblProgress">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="halign">start</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="pack-type">start</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="btnStart">
+                <property name="label" translatable="yes">Start</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="halign">end</property>
+                <signal name="clicked" handler="btn_start_handler" />
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="pack-type">end</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
