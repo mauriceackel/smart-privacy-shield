@@ -112,22 +112,6 @@ static void gst_obj_detection_get_property(GObject *object, guint prop_id, GValu
     }
 }
 
-// Perform inference on a pair of model and bypass buffer
-static void gst_obj_detection_inference(gpointer data, gpointer self)
-{
-    GstObjDetection *filter = GST_OBJ_DETECTION(self);
-    GstInferenceData *inferenceData = (GstInferenceData *)data;
-    gboolean success;
-
-    GST_DEBUG_OBJECT(filter, "Starting inference thread");
-
-    success = gst_inference_util_run_inference(filter->inferenceUtil, filter, inferenceData);
-
-    inferenceData->error = !success;
-    inferenceData->processed = TRUE;
-    GST_DEBUG_OBJECT(filter, "Finished inference thread");
-}
-
 // Prepare to start processing -> open ressources, etc.
 static gboolean gst_obj_detection_start(GstObjDetection *filter)
 {
@@ -143,9 +127,6 @@ static gboolean gst_obj_detection_start(GstObjDetection *filter)
     // Init inference
     gst_inference_util_initialize(filter->inferenceUtil, filter);
 
-    // Setup thread pool
-    filter->threadPool = g_thread_pool_new(gst_obj_detection_inference, (gpointer)filter, THREAD_POOL_SIZE, FALSE, NULL);
-
     // Start collect pads
     gst_collect_pads_start(filter->collectPads);
 
@@ -159,20 +140,6 @@ static gboolean gst_obj_detection_stop(GstObjDetection *filter)
     // Stop collect pads
     gst_collect_pads_stop(filter->collectPads);
 
-    // Stop all threads and wait for them to finish
-    g_thread_pool_free(filter->threadPool, TRUE, TRUE);
-
-    // Flush queue
-    GstInferenceData *data;
-    g_mutex_lock(&filter->mtxProcessingQueue);
-    while ((data = (GstInferenceData *)g_queue_pop_head(filter->processingQueue)))
-    {
-        gst_buffer_unref(data->bypassBuffer);
-        gst_buffer_unref(data->modelBuffer);
-        g_object_unref(data);
-    }
-    g_mutex_unlock(&filter->mtxProcessingQueue);
-
     // Clear up last inference
     if (filter->lastInferenceData)
         g_object_unref(filter->lastInferenceData);
@@ -182,132 +149,6 @@ static gboolean gst_obj_detection_stop(GstObjDetection *filter)
     gst_inference_util_finalize(filter->inferenceUtil);
 
     return TRUE;
-}
-
-// Called whenever both sinks have a buffer queued
-static GstFlowReturn gst_obj_detection_aggregate_function_parallel(GstCollectPads *pads, gpointer self)
-{
-    GstObjDetection *filter = GST_OBJ_DETECTION(self);
-    GstFlowReturn ret = GST_FLOW_OK;
-
-    GstBuffer *modelBuffer, *bypassBuffer;
-    GstInferenceData *data, *lastInferenceData = NULL;
-
-    // Get queued buffers
-    modelBuffer = gst_collect_pads_pop(pads, filter->modelSinkData);
-    bypassBuffer = gst_collect_pads_pop(pads, filter->bypassSinkData);
-    if (modelBuffer == NULL && bypassBuffer == NULL)
-    {
-        GST_DEBUG_OBJECT(filter, "Both buffers empty, pushing EOS");
-        ret = GST_FLOW_EOS;
-        goto out;
-    }
-    GST_DEBUG_OBJECT(filter, "Collected modelBuffer: %p and bypassBuffer: %p", modelBuffer, bypassBuffer);
-
-    // Make writeable
-    bypassBuffer = gst_buffer_make_writable(bypassBuffer);
-
-    // Drop buffers if there are too many unprocessed tasks
-    if (g_thread_pool_unprocessed(filter->threadPool) > 2)
-    {
-        // TODO: We should drop buffers from the front of the queue, as otherwise the delay will continue to be there (i.e. buffers will come late all the time)
-        // TODO: We would need to abort the threads though -> bad
-        GST_WARNING_OBJECT(filter, "Too many unprocessed frames. Dropping buffers.");
-        gst_buffer_unref(modelBuffer);
-        gst_buffer_unref(bypassBuffer);
-        goto process_queue;
-    }
-
-    // Prepare for parallel processing
-    data = gst_inference_data_new();
-    data->bypassBuffer = bypassBuffer;
-    data->modelBuffer = modelBuffer;
-    data->processed = FALSE;
-
-    // Get local reference to last inference data
-    lastInferenceData = filter->lastInferenceData;
-    filter->lastInferenceData = g_object_ref(data);
-
-    // Add inference data to queue
-    g_mutex_lock(&filter->mtxProcessingQueue);
-    g_queue_push_tail(filter->processingQueue, (gpointer)data);
-    g_mutex_unlock(&filter->mtxProcessingQueue);
-
-    // Early return when not active
-    if (!filter->active)
-    {
-        // Simply pass through data
-        data->processed = TRUE;
-        data->error = FALSE;
-        goto process_queue;
-    }
-
-    // Check if inference is needed
-    GstChangeMeta *changeMeta = GST_CHANGE_META_GET(bypassBuffer);
-    if (changeMeta)
-    {
-        if (!changeMeta->changed && lastInferenceData)
-        {
-            GST_DEBUG_OBJECT(filter, "No change, reusing detections");
-            inference_couple(lastInferenceData, data);
-            data->processed = TRUE;
-            goto process_queue;
-        }
-    }
-    else
-        GST_DEBUG_OBJECT(filter, "No change meta");
-
-    // Start processing
-    GST_DEBUG_OBJECT(filter, "Dispatching new processing thread");
-    g_thread_pool_push(filter->threadPool, (gpointer)data, NULL);
-
-process_queue:
-    // Output processed buffers
-    while (TRUE)
-    {
-        g_mutex_lock(&filter->mtxProcessingQueue);
-        data = (GstInferenceData *)g_queue_peek_head(filter->processingQueue);
-
-        // Stop if there is no more data in the buffer or the most recent data has not finished processing
-        if (data == NULL || !data->processed)
-        {
-            g_mutex_unlock(&filter->mtxProcessingQueue);
-            goto out;
-        }
-
-        // Remove from queue
-        data = (GstInferenceData *)g_queue_pop_head(filter->processingQueue);
-        g_mutex_unlock(&filter->mtxProcessingQueue);
-
-        // Apply detections (i.e. add to metadata)
-        data->error |= !inference_apply(filter, data);
-
-        // Ignore buffers with errors
-        if (data->error)
-            continue;
-
-        // Push processed bypass buffer
-        GST_LOG_OBJECT(filter, "Returning processed data %" GST_PTR_FORMAT, data);
-        gst_buffer_unref(data->modelBuffer);
-        ret = gst_pad_push(filter->source, data->bypassBuffer);
-
-        // Only free previous data as current data might be required by the next frame
-        g_object_unref(data);
-
-        // Abort on error
-        if (G_UNLIKELY(ret != GST_FLOW_OK))
-            goto out;
-    }
-
-out:
-    if (lastInferenceData)
-        g_object_unref(lastInferenceData);
-
-    // Reached EOS send event downstream
-    if (ret == GST_FLOW_EOS)
-        gst_pad_push_event(filter->source, gst_event_new_eos());
-
-    return ret;
 }
 
 // Called whenever both sinks have a buffer queued
@@ -335,8 +176,6 @@ static GstFlowReturn gst_obj_detection_aggregate_function(GstCollectPads *pads, 
 
     // Prepare for inference
     data = gst_inference_data_new();
-    data->bypassBuffer = bypassBuffer;
-    data->modelBuffer = modelBuffer;
     data->processed = FALSE;
 
     // Get local reference to last inference data
@@ -368,24 +207,27 @@ static GstFlowReturn gst_obj_detection_aggregate_function(GstCollectPads *pads, 
         GST_DEBUG_OBJECT(filter, "No change meta");
 
     // Start processing
-    gboolean success = gst_inference_util_run_inference(filter->inferenceUtil, filter, data); // TODO: Think about only processing the last buffer on change
+    gboolean success = gst_inference_util_run_inference(filter->inferenceUtil, filter, modelBuffer, bypassBuffer, data); // TODO: Think about only processing the last buffer on change
     data->error = !success;
 
 output_buffer:
     // Apply detections (i.e. add to metadata)
-    data->error |= !inference_apply(filter, data);
+    data->error |= !inference_apply(filter, bypassBuffer, data);
 
     // Ignore buffers with errors
     if (data->error)
+    {
+        gst_buffer_unref(bypassBuffer);
         goto skip_processing;
+    }
 
     // Push processed bypass buffer
     GST_LOG_OBJECT(filter, "Returning processed data %" GST_PTR_FORMAT, data);
-    gst_buffer_unref(data->modelBuffer);
-    ret = gst_pad_push(filter->source, data->bypassBuffer);
+    ret = gst_pad_push(filter->source, bypassBuffer);
 
 skip_processing:
     // Free data
+    gst_buffer_unref(modelBuffer);
     g_object_unref(data);
 
     if (lastInferenceData)
@@ -685,8 +527,6 @@ static void gst_obj_detection_init(GstObjDetection *filter)
     filter->labels = g_ptr_array_new_with_free_func(g_free);
 
     filter->lastInferenceData = NULL;
-    filter->processingQueue = g_queue_new();
-    g_mutex_init(&filter->mtxProcessingQueue);
 
     // Init modelSinkCaps
     filter->modelSinkCaps = gst_static_pad_template_get_caps(&obj_detection_model_sink_template);
@@ -704,9 +544,6 @@ static void gst_obj_detection_finalize(GObject *object)
     g_free((void *)filter->prefix);
 
     g_ptr_array_free(filter->labels, TRUE);
-
-    g_mutex_clear(&filter->mtxProcessingQueue);
-    g_queue_free(filter->processingQueue);
 
     g_clear_object(&(filter->collectPads));
     g_clear_object(&(filter->bypassSink));

@@ -55,11 +55,11 @@ G_END_DECLS
 
 // Helpers
 void inference_couple(GstInferenceData *source, GstInferenceData *target);
-gboolean inference_apply(GstObjDetection *objDet, GstInferenceData *data);
+gboolean inference_apply(GstObjDetection *objDet, GstBuffer *bypassBuffer, GstInferenceData *data);
 
 // Methods
 void gst_inference_util_initialize(GstInferenceUtil *self, GstObjDetection *objDet);
 void gst_inference_util_reinitialize(GstInferenceUtil *self, GstObjDetection *objDet);
 void gst_inference_util_finalize(GstInferenceUtil *self);
-gboolean gst_inference_util_run_inference(GstInferenceUtil *self, GstObjDetection *objDet, GstInferenceData *data);
+gboolean gst_inference_util_run_inference(GstInferenceUtil *self, GstObjDetection *objDet, GstBuffer *modelBuffer, GstBuffer *bypassBuffer, GstInferenceData *data);
 GstInferenceUtil *gst_inference_util_new();

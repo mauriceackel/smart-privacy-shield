@@ -20,7 +20,6 @@ struct _GstInferenceData
 {
     GObject parent;
 
-    GstBuffer *modelBuffer, *bypassBuffer;
     gboolean processed, error;
     GPtrArray *detections;
 };

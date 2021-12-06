@@ -30,10 +30,6 @@ struct _GstObjDetection
 
     GstInferenceData *lastInferenceData;
 
-    GMutex mtxProcessingQueue;
-    GQueue *processingQueue;
-    GThreadPool *threadPool;
-
     const char *modelPath;
     const char *prefix;
     GPtrArray *labels;

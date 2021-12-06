@@ -255,19 +255,19 @@ void inference_couple(GstInferenceData *source, GstInferenceData *target)
     target->detections = g_ptr_array_ref(source->detections);
 }
 
-gboolean inference_apply(GstObjDetection *objDet, GstInferenceData *data)
+gboolean inference_apply(GstObjDetection *objDet, GstBuffer *bypassBuffer, GstInferenceData *data)
 {
     // Check if bypass buffer is writeable
-    g_return_val_if_fail(gst_buffer_is_writable(data->bypassBuffer), FALSE);
+    g_return_val_if_fail(gst_buffer_is_writable(bypassBuffer), FALSE);
 
     // Prepare meta on bypass buffer
     GstDetectionMeta *meta;
-    meta = GST_DETECTION_META_GET(data->bypassBuffer);
+    meta = GST_DETECTION_META_GET(bypassBuffer);
     if (meta == NULL)
     {
         // Add new detection meta
         GST_DEBUG_OBJECT(objDet, "No object detection meta on buffer. Adding new meta.");
-        meta = GST_DETECTION_META_ADD(data->bypassBuffer);
+        meta = GST_DETECTION_META_ADD(bypassBuffer);
     }
 
     // Add detections to buffer
@@ -362,13 +362,12 @@ static void gst_inference_util_postprocess(GstInferenceUtil *self, gfloat *rawDe
     {
         gint offset = i * SINGLE_DETECTION_SIZE(self->classCount);
 
-        gint x, y, width, height;
-        gfloat objProp;
-        gfloat *classProbs = g_malloc(sizeof(gfloat) * self->classCount);
-
-        objProp = rawDetections[offset + 4];
+        gfloat objProp = rawDetections[offset + 4];
         if (objProp < OBJ_PROB_THRESHOLD)
             continue;
+
+        gint x, y, width, height;
+        gfloat *classProbs = g_malloc(sizeof(gfloat) * self->classCount);
 
         x = (int)roundf(rawDetections[offset + 0] * ratioX);
         y = (int)roundf(rawDetections[offset + 1] * ratioY);
@@ -446,7 +445,7 @@ out:
 }
 
 // Public inference function. Handles all required inference steps
-gboolean gst_inference_util_run_inference(GstInferenceUtil *self, GstObjDetection *objDet, GstInferenceData *data)
+gboolean gst_inference_util_run_inference(GstInferenceUtil *self, GstObjDetection *objDet, GstBuffer *modelBuffer, GstBuffer *bypassBuffer, GstInferenceData *data)
 {
     GST_DEBUG_OBJECT(objDet, "Starting inference");
 
@@ -458,11 +457,11 @@ gboolean gst_inference_util_run_inference(GstInferenceUtil *self, GstObjDetectio
     if (!self->initialized || self->ort == NULL)
         return FALSE;
     // Check if bypass buffer is writeable
-    g_return_val_if_fail(gst_buffer_is_writable(data->bypassBuffer), FALSE);
+    g_return_val_if_fail(gst_buffer_is_writable(bypassBuffer), FALSE);
 
     // Check if image from buffer has right size
     GstMapInfo info;
-    gst_buffer_map(data->modelBuffer, &info, GST_MAP_READ);
+    gst_buffer_map(modelBuffer, &info, GST_MAP_READ);
     if (info.size != EXPECTED_INPUT_SIZE(self->modelProportion))
     {
         GST_ERROR_OBJECT(objDet, "ModelBuffer has wrong size for inference. Got %zu, expected %i", info.size, EXPECTED_INPUT_SIZE(self->modelProportion));
@@ -503,7 +502,7 @@ out:
         self->ort->ReleaseStatus(status);
     }
 
-    gst_buffer_unmap(data->modelBuffer, &info);
+    gst_buffer_unmap(modelBuffer, &info);
     if (processedData)
         g_free(processedData);
     if (rawDetections)
