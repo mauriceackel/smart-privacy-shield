@@ -137,9 +137,17 @@ void get_visible_windows(guint64 displayId, GArray *winInfo)
         gboolean isOnSameSpace = FALSE;
         CFArrayRef windowSpaces = CGSCopySpacesForWindows(connectionId, kCGSAllSpacesMask, (__bridge CFArrayRef) @[ @(windowId.intValue) ]);
         CFIndex spaceCount = CFArrayGetCount(windowSpaces);
-        for(gint i = 0; i < spaceCount; i++)
+
+        if (spaceCount == 0)
+        {
+            // Unable to get space, pass it forward to check for display bounds
+            isOnSameSpace = TRUE;
+        }
+
+        for(gint i = 0; i < spaceCount && !isOnSameSpace; i++)
         {
             NSNumber *windowSpaceId = (NSNumber*)CFArrayGetValueAtIndex(windowSpaces, i);
+
             if (windowSpaceId.intValue == displaySpaceId)
             {
                 isOnSameSpace = TRUE;
@@ -173,7 +181,7 @@ void get_visible_windows(guint64 displayId, GArray *winInfo)
         // Align to full frame
         intersection.origin.x -= displayRect.origin.x;
         intersection.origin.y -= displayRect.origin.y;
-    
+
         BoundingBox bbox = {
             .x = (gint)intersection.origin.x,
             .y = (gint)intersection.origin.y,
