@@ -480,7 +480,7 @@ gboolean gst_inference_util_run_inference(GstInferenceUtil *self, GstObjDetectio
     GST_DEBUG_OBJECT(objDet, "Finished infering");
 
     // Get information on bypass buffer
-    GstVideoMeta *videoMeta = (GstVideoMeta *)gst_buffer_get_meta(data->bypassBuffer, GST_VIDEO_META_API_TYPE);
+    GstVideoMeta *videoMeta = (GstVideoMeta *)gst_buffer_get_meta(bypassBuffer, GST_VIDEO_META_API_TYPE);
     if (videoMeta == NULL)
     {
         GST_ERROR_OBJECT(objDet, "No video metadata available");

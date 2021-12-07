@@ -4,7 +4,7 @@
 #include "inferencedata.h"
 #include "inferenceutil.h"
 
-#define LATENCY 2000000000 // nanoseconds processing latency = time for inference
+#define LATENCY 0 // nanoseconds processing latency = time for inference
 #define THREAD_POOL_SIZE 4
 
 GST_DEBUG_CATEGORY(gst_obj_detection_debug);
