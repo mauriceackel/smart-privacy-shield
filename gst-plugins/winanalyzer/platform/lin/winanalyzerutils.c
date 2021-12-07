@@ -3,12 +3,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-void get_all_windows(GstWinAnalyzer *filter, GArray *winInfo)
-{
-    get_visible_windows(filter, winInfo);
-}
-
-void get_visible_windows(GstWinAnalyzer *filter, GArray *winInfo)
+void get_windows(guint64 displayId, GArray *winInfo, gboolean onlyVisible)
 {
     Display *display = XOpenDisplay(NULL);
     Window rootWindowId = RootWindow(display, DefaultScreen(display));
@@ -87,7 +82,7 @@ void get_visible_windows(GstWinAnalyzer *filter, GArray *winInfo)
         };
 
         XWindowAttributes displayAttributes;
-        XGetWindowAttributes(display, filter->displayId, &displayAttributes);
+        XGetWindowAttributes(display, displayId, &displayAttributes);
         BoundingBox displayRect = {
             .x = displayAttributes.x,
             .y = displayAttributes.y,
@@ -97,7 +92,7 @@ void get_visible_windows(GstWinAnalyzer *filter, GArray *winInfo)
 
         BoundingBox intersection = gst_bounding_box_intersect(&windowRect, &displayRect);
         if (intersection.width <= 0 || intersection.height <= 0)
-            continue;
+            goto out;
 
         gint zIndex = i; // results are returned from low to high zorder (i.e. background first)
 
@@ -110,11 +105,10 @@ void get_visible_windows(GstWinAnalyzer *filter, GArray *winInfo)
             .id = (guintptr)windowId,
         };
 
-        GST_DEBUG_OBJECT(filter, "WindowDetection: owner=%s, window=%s, bounds=(%i, %i, %i, %i)", wInfo.ownerName, wInfo.windowName, wInfo.bbox.x, wInfo.bbox.y, wInfo.bbox.width, wInfo.bbox.height);
-
         g_array_append_val(winInfo, wInfo);
 
         // Free memory
+    out:
         g_free((void *)windowName);
         g_free((void *)ownerName);
     }

@@ -122,7 +122,7 @@ static gboolean enum_window_callback(HWND hWnd, LPARAM param)
     RECT intersection;
     gboolean intersected = IntersectRect(&intersection, &windowRect, &displayRect);
     if (!intersected)
-        return TRUE;
+        goto out;
 
     BoundingBox bbox = {
         .x = (gint)intersection.left,
@@ -143,6 +143,7 @@ static gboolean enum_window_callback(HWND hWnd, LPARAM param)
     g_array_append_val(data->winInfo, wInfo);
 
     // Free memory
+out:
     g_free(windowName);
     g_free(ownerName);
 
@@ -222,17 +223,11 @@ BoundingBox get_taskbar_bounding_box(HMONITOR display)
     return taskbarBoundingBox;
 }
 
-void get_all_windows(GstWinAnalyzer *filter, GArray *winInfo)
-{
-    // No special treatment here
-    get_visible_windows(filter, winInfo);
-}
-
-void get_visible_windows(GstWinAnalyzer *filter, GArray *winInfo)
+void get_windows(guint64 displayId, GArray *winInfo, gboolean onlyVisible)
 {
     EnumData data = {
         .winInfo = winInfo,
-        .displayId = filter->displayId,
+        .displayId = displayId,
     };
 
     // First, we only extract the window info with undefined zIndex
@@ -252,8 +247,9 @@ void get_visible_windows(GstWinAnalyzer *filter, GArray *winInfo)
         .ownerName = g_strdup("taskbar"),
         .windowName = g_strdup("taskbar"),
         .zIndex = (gint)(winInfo->len + 1), // Highest zIndex
-        .bbox = get_taskbar_bounding_box((HMONITOR)filter->displayId),
+        .bbox = get_taskbar_bounding_box((HMONITOR)displayId),
         .id = 0,
     };
+
     g_array_append_val(winInfo, taskbar);
 }

@@ -87,7 +87,7 @@ static void gst_win_analyzer_get_property(GObject *object, guint prop_id, GValue
   {
     GArray *winInfos = g_array_new(FALSE, FALSE, sizeof(WindowInfo));
     g_array_set_clear_func(winInfos, window_info_clear);
-    get_all_windows(filter, winInfos);
+    get_windows(filter->displayId, winInfos, FALSE);
 
     GHashTable *labelSet = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     for (gint i = 0; i < winInfos->len; i++)
@@ -132,7 +132,7 @@ static gboolean gst_win_analyzer_start(GstBaseTransform *base)
 
   GstStructure *payload = gst_structure_new_from_string("report_window_locations, active=true");
   GstQuery *query = gst_query_new_custom(GST_QUERY_CUSTOM, payload);
-  
+
   GstPad *sinkPad = GST_BASE_TRANSFORM_SINK_PAD(base);
   gst_pad_peer_query(sinkPad, query);
   gst_query_unref(query);
@@ -147,7 +147,7 @@ static gboolean gst_win_analyzer_stop(GstBaseTransform *base)
 
   GstStructure *payload = gst_structure_new_from_string("report_window_locations, active=false");
   GstQuery *query = gst_query_new_custom(GST_QUERY_CUSTOM, payload);
-  
+
   GstPad *sinkPad = GST_BASE_TRANSFORM_SINK_PAD(base);
   gst_pad_peer_query(sinkPad, query);
   gst_query_unref(query);
@@ -189,6 +189,7 @@ static GstFlowReturn gst_win_analyzer_transform_buffer(GstBaseTransform *base, G
 
   // Get windows from meta if possible
   GArray *winInfos = g_array_new(FALSE, FALSE, sizeof(WindowInfo));
+  g_array_set_clear_func(winInfos, window_info_clear);
 
   GstWindowLocationsMeta *windowLocationsMeta = GST_WINDOW_LOCATIONS_META_GET(buffer);
   if (windowLocationsMeta)
@@ -204,19 +205,11 @@ static GstFlowReturn gst_win_analyzer_transform_buffer(GstBaseTransform *base, G
   else
   {
     // No metadata, capture now
-    winInfos = g_array_new(FALSE, FALSE, sizeof(WindowInfo));
-    g_array_set_clear_func(winInfos, window_info_clear);
-    get_visible_windows(filter, winInfos);
+    get_windows(filter->displayId, winInfos, TRUE);
   }
 
-  // Sorty by zIndex from front to back (i.e. descending)
+  // Sort by zIndex from front to back (i.e. descending)
   g_array_sort(winInfos, (GCompareFunc)sort_window_info_zindex);
-
-  // for (guint i = 0; i < winInfos->len; i++)
-  // {
-  //   WindowInfo *winInfo = &g_array_index(winInfos, WindowInfo, i);
-  //   g_print("%s/%s @ (%i, %i, %i, %i) ~> %i\n", winInfo->ownerName, winInfo->windowName, winInfo->bbox.x, winInfo->bbox.y, winInfo->bbox.width, winInfo->bbox.height, winInfo->zIndex);
-  // }
 
   for (guint i = 0; i < winInfos->len; i++)
   {
@@ -226,7 +219,8 @@ static GstFlowReturn gst_win_analyzer_transform_buffer(GstBaseTransform *base, G
     g_array_append_val(resultingBoundingBoxes, winInfo->bbox);
 
     // For each window that has a higher zorder, compute overlap
-    for (gint j = 0; j < i; j++)
+    // Start from element and go towards front
+    for (gint j = i - 1; j >= 0; j--)
     {
       WindowInfo *higherWinInfo = &g_array_index(winInfos, WindowInfo, j);
 
@@ -235,7 +229,7 @@ static GstFlowReturn gst_win_analyzer_transform_buffer(GstBaseTransform *base, G
 
       GArray *result = gst_bounding_box_subtract_from_boxes(resultingBoundingBoxes, &higherWinInfo->bbox);
       g_array_free(resultingBoundingBoxes, TRUE);
-      resultingBoundingBoxes = result; // TODO: Optimize
+      resultingBoundingBoxes = result;
     }
 
     // Preprocessing finished, now produce detections
@@ -267,10 +261,13 @@ static GstFlowReturn gst_win_analyzer_transform_buffer(GstBaseTransform *base, G
     }
 
     // Free memory
+    g_array_free(resultingBoundingBoxes, TRUE);
     g_string_free(fullLabel, TRUE);
   }
 
 out:
+  g_array_free(winInfos, TRUE);
+
   return ret;
 }
 
