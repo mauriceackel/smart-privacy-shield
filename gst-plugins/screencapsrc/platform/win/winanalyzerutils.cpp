@@ -121,7 +121,7 @@ static gboolean enum_window_callback(HWND hWnd, LPARAM param)
     RECT intersection;
     gboolean intersected = IntersectRect(&intersection, &windowRect, &displayRect);
     if (!intersected)
-        return TRUE;
+        goto out;
 
     BoundingBox bbox = {
         .x = (gint)intersection.left,
@@ -142,6 +142,7 @@ static gboolean enum_window_callback(HWND hWnd, LPARAM param)
     g_array_append_val(data->winInfo, wInfo);
 
     // Free memory
+out:
     g_free(windowName);
     g_free(ownerName);
 
@@ -221,7 +222,7 @@ BoundingBox get_taskbar_bounding_box(HMONITOR display)
     return taskbarBoundingBox;
 }
 
-void get_visible_windows(guint64 displayId, GArray *winInfo)
+void get_windows(guint64 displayId, GArray *winInfo)
 {
     EnumData data = {
         .winInfo = winInfo,
@@ -248,5 +249,6 @@ void get_visible_windows(guint64 displayId, GArray *winInfo)
         .bbox = get_taskbar_bounding_box((HMONITOR)displayId),
         .id = 0,
     };
+
     g_array_append_val(winInfo, taskbar);
 }

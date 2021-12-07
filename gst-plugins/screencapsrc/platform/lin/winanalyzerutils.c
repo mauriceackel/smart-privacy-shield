@@ -2,7 +2,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-void get_visible_windows(guint64 displayId, GArray *winInfo)
+void get_windows(guint64 displayId, GArray *winInfo)
 {
     Display *display = XOpenDisplay(NULL);
     Window rootWindowId = RootWindow(display, DefaultScreen(display));
@@ -91,7 +91,7 @@ void get_visible_windows(guint64 displayId, GArray *winInfo)
 
         BoundingBox intersection = gst_bounding_box_intersect(&windowRect, &displayRect);
         if (intersection.width <= 0 || intersection.height <= 0)
-            continue;
+            goto out;
 
         gint zIndex = i; // results are returned from low to high zorder (i.e. background first)
 
@@ -107,6 +107,7 @@ void get_visible_windows(guint64 displayId, GArray *winInfo)
         g_array_append_val(winInfo, wInfo);
 
         // Free memory
+    out:
         g_free((void *)windowName);
         g_free((void *)ownerName);
     }

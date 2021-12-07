@@ -114,7 +114,7 @@ GstFlowReturn gst_screen_cap_util_create_buffer(GstScreenCapUtil *self, GstScree
     {
         windowInfos = g_array_new(FALSE, FALSE, sizeof(WindowInfo));
         g_array_set_clear_func(windowInfos, window_info_clear);
-        get_visible_windows(src->sourceId, windowInfos);
+        get_windows(src->sourceId, windowInfos);
     }
 
     // Decide on display vs. window capture and do the capture

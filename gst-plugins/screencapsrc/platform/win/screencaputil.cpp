@@ -165,7 +165,7 @@ void frame_arrived_handler(GstScreenCapUtil *self, GstScreenCapSrc *src)
     {
         windowInfos = g_array_new(FALSE, FALSE, sizeof(WindowInfo));
         g_array_set_clear_func(windowInfos, window_info_clear);
-        get_visible_windows(src->sourceId, windowInfos);
+        get_windows(src->sourceId, windowInfos);
     }
 
     // Get window coordinates
