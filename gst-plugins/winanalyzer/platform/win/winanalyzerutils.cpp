@@ -121,17 +121,21 @@ static gboolean enum_window_callback(HWND hWnd, LPARAM param)
 
     RECT intersection;
     gboolean intersected = IntersectRect(&intersection, &windowRect, &displayRect);
+    
+    BoundingBox bbox;
+    WindowInfo wInfo;
+
     if (!intersected)
         goto out;
 
-    BoundingBox bbox = {
+    bbox = {
         .x = (gint)intersection.left,
         .y = (gint)intersection.top,
         .width = (gint)(intersection.right - intersection.left),
         .height = (gint)(intersection.bottom - intersection.top),
     };
 
-    WindowInfo wInfo = {
+    wInfo = {
         .ownerName = g_utf8_strdown(ownerName, -1),
         .windowName = g_utf8_strdown(windowName, -1),
         .zIndex = -1, // Has to be updated once all windows are retrieved
