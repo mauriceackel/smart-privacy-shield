@@ -39,7 +39,8 @@ install(TARGETS gstregions gstchangedetector gstobjdetection gstobstruct gstwina
 if(APPLE)
   install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/data/models/mac.onnx" DESTINATION "${CURRENT_PLUGIN_BASE_DIR}/${DATA_DIR}/models")
 elseif(UNIX)
-  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/data/models/linux.onnx" DESTINATION "${CURRENT_PLUGIN_BASE_DIR}/${DATA_DIR}/models")
+  # TODO: Add back once there is a linux model 
+  # install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/data/models/linux.onnx" DESTINATION "${CURRENT_PLUGIN_BASE_DIR}/${DATA_DIR}/models")
 elseif(WIN32)
   install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/data/models/windows.onnx" DESTINATION "${CURRENT_PLUGIN_BASE_DIR}/${DATA_DIR}/models")
 endif()
