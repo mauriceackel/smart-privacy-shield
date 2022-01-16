@@ -14,17 +14,6 @@
 #   ONNXRUNTIME_INCLUDE_DIRS    Include directories.
 #
 
-MACRO(SUBDIRLIST result curdir)
-    file(GLOB children RELATIVE ${curdir} ${curdir}/*)
-    set(dirlist "")
-    foreach(child ${children})
-    if(IS_DIRECTORY ${curdir}/${child})
-        list(APPEND dirlist ${child})
-    endif()
-    endforeach()
-    set(${result} ${dirlist})
-ENDMACRO()
-
 MACRO(GET_ARCHITECTURE result)
     if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
         set(${result} "x64")
@@ -55,27 +44,18 @@ MACRO(GET_ARCHITECTURE result)
 ENDMACRO()
 
 if(WIN32)
-    # Try to find a nuget package
-    string(REGEX REPLACE "\\\\" "/" ONNXRUNTIME_BASE_DIR "$ENV{HOMEPATH}/.nuget/packages/microsoft.ml.onnxruntime") 
-    subdirlist(ONNXRUNTIME_VERSION_DIRS ${ONNXRUNTIME_BASE_DIR})
-    
-    if(NOT ONNXRUNTIME_VERSION_DIRS)
-        message(WARNING "No onnxruntime nuget package found. Please install a package!")
-    else()
-        # Sort by version descending
-        list(SORT ONNXRUNTIME_VERSION_DIRS COMPARE NATURAL ORDER DESCENDING)
-        # Get latest version
-        list(GET ONNXRUNTIME_VERSION_DIRS 0 ONNXRUNTIME_VERSION)
-        
-        # Get include dir
-        set(ONNXRUNTIME_INCLUDE_DIRS "${ONNXRUNTIME_BASE_DIR}/${ONNXRUNTIME_VERSION}/build/native/include")
-
-        get_architecture(ARCH)
-        # Get include dir
-        set(ONNXRUNTIME_LIBRARY_DIRS "${ONNXRUNTIME_BASE_DIR}/${ONNXRUNTIME_VERSION}/runtimes/win-${ARCH}/native")
-        # Get libraries
-        find_library(ONNXRUNTIME_LIBRARIES onnxruntime libonnxruntime PATHS "${ONNXRUNTIME_LIBRARY_DIRS}" CMAKE_FIND_ROOT_PATH_BOTH)
+    if(NOT ONNXRUNTIME_PATH)
+        message(FATAL_ERROR "No path to ONNX Runtime folder specified. Please specify a path to the package folder using -DONNXRUNTIME_PATH=...")
     endif()
+
+    # Get include dir
+    set(ONNXRUNTIME_INCLUDE_DIRS "${ONNXRUNTIME_PATH}/build/native/include")
+
+    get_architecture(ARCH)
+    # Get library dirs
+    set(ONNXRUNTIME_LIBRARY_DIRS "${ONNXRUNTIME_PATH}/runtimes/win-${ARCH}/native")
+    # Get libraries
+    find_library(ONNXRUNTIME_LIBRARIES onnxruntime libonnxruntime PATHS "${ONNXRUNTIME_LIBRARY_DIRS}" CMAKE_FIND_ROOT_PATH_BOTH)
 else()
     # Check long path
     find_path(ONNXRUNTIME_INCLUDE_DIRS onnxruntime/core/session/onnxruntime_c_api.h CMAKE_FIND_ROOT_PATH_BOTH)

@@ -24,7 +24,7 @@
 set(OUTPUT_VARS)
 
 if(WIN32 AND MSVC)
-    set(GLIB2_ROOT_DIR "C:/gtk/3.24.30")
+    set(GLIB2_ROOT_DIR "C:/gtk")
 
     set(GLIB2_INCLUDE_DIRS "${GLIB2_ROOT_DIR}/include/glib-2.0" "${GLIB2_ROOT_DIR}/lib/glib-2.0/include")
     set(GLIB2_LIBRARY_DIRS "${GLIB2_ROOT_DIR}/lib")

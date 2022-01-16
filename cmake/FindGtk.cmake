@@ -15,7 +15,7 @@
 set(OUTPUT_VARS)
 
 if(WIN32 AND MSVC)
-    set(GTK_ROOT_DIR "C:/gtk/3.24.30")
+    set(GTK_ROOT_DIR "C:/gtk")
 
     set(GTK_INCLUDE_DIRS
         "${GTK_ROOT_DIR}/include/gtk-3.0"
